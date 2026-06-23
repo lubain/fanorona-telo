@@ -1,0 +1,27 @@
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - ./backend/.env
+    expose:
+      - "8000"
+    restart: unless-stopped
+    networks:
+      - fanorona-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: /api
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - fanorona-network
+
+networks:
+  fanorona-network:
+    driver: bridge

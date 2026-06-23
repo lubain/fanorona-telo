@@ -1,0 +1,347 @@
+:root {
+  --bg: #09090b;
+  --surface: #111113;
+  --surface2: #18181b;
+  --border: rgba(255, 255, 255, 0.08);
+  --border2: rgba(255, 255, 255, 0.14);
+  --text: #fafafa;
+  --muted: #71717a;
+  --muted2: #a1a1aa;
+
+  /* Go accent */
+  --fan-a: #34d399;
+  --fan-b: #6ee7b7;
+  --fan-line: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.card-fanorona:hover {
+  border-color: rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 32px rgba(52, 211, 153, 0.12);
+}
+.card-fanorona::before {
+  background: radial-gradient(
+    ellipse at 80% 20%,
+    rgba(52, 211, 153, 0.06),
+    transparent 60%
+  );
+}
+.card-fanorona:hover::before {
+  opacity: 1;
+}
+
+.card-fanorona .hub-card-icon {
+  background: rgba(52, 211, 153, 0.1);
+  color: var(--fan-a);
+}
+
+.card-fanorona .hub-card-tagline {
+  color: var(--fan-a);
+}
+
+.card-fanorona .hub-card-cta {
+  background: rgba(52, 211, 153, 0.12);
+  color: var(--fan-b);
+}
+.card-fanorona:hover .hub-card-cta {
+  background: rgba(52, 211, 153, 0.22);
+}
+
+.hub-game-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem 3rem;
+  gap: 1.25rem;
+}
+
+.hub-game-header {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hub-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
+  white-space: nowrap;
+}
+.hub-back-btn:hover {
+  color: var(--text);
+  border-color: var(--border2);
+  background: var(--surface2);
+}
+
+.hub-game-title {
+  flex: 1;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-align: center;
+}
+
+.fanorona-accent {
+  background: linear-gradient(135deg, var(--fan-a), var(--fan-b));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hub-thinking {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.95);
+  border: 1px solid var(--border2);
+  font-size: 0.875rem;
+  color: var(--muted2);
+}
+
+.hub-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #6366f1;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.is-thinking {
+  filter: blur(1.5px);
+  opacity: 0.7;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── FANORONA ─────────────────────────────────────────────── */
+.fanorona-board {
+  position: relative;
+  width: min(320px, 85vw);
+  height: min(320px, 85vw);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.25rem;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+
+.fanorona-svg {
+  position: absolute;
+  inset: 1.25rem;
+  width: calc(100% - 2.5rem);
+  height: calc(100% - 2.5rem);
+  overflow: visible;
+}
+
+.fanorona-points {
+  position: absolute;
+  inset: 1.25rem;
+  width: calc(100% - 2.5rem);
+  height: calc(100% - 2.5rem);
+}
+
+.fanorona-point {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.fanorona-piece {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.fanorona-point:hover .fanorona-piece {
+  transform: scale(1.12);
+}
+
+.piece-empty {
+  background: var(--surface2);
+  border: 2px solid var(--border2);
+  color: transparent;
+}
+.fanorona-point:hover .piece-empty {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.piece-x {
+  background: rgba(52, 211, 153, 0.2);
+  border: 2px solid var(--fan-a);
+  color: var(--fan-a);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.2);
+}
+
+.piece-o {
+  background: rgba(244, 114, 182, 0.2);
+  border: 2px solid #f472b6;
+  color: #f472b6;
+  box-shadow: 0 0 12px rgba(244, 114, 182, 0.2);
+}
+
+.fanorona-point.selected .fanorona-piece {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.5);
+}
+
+.fanorona-point.valid-target .piece-empty {
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+@keyframes dropIn {
+  from {
+    transform: scaleY(0.3) scaleX(1.1);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Board container */
+.go-board-container {
+  position: relative;
+}
+
+.go-board {
+  position: relative;
+  background: #1c1608;
+  border-radius: 14px;
+  border: 2px solid rgba(180, 150, 80, 0.2);
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 0;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+  line-height: 0;
+}
+
+/* SVG unique qui contient lignes + pierres */
+.go-svg {
+  display: block;
+  width: min(420px, 92vw);
+  height: min(420px, 92vw);
+  border-radius: 12px;
+}
+
+/* Classes legacy gardées pour compatibilité mais non utilisées par le nouveau rendu */
+.go-grid-svg {
+  display: none;
+}
+.go-intersections {
+  display: none;
+}
+
+/* Stones (gardées au cas où) */
+.go-stone {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.1s;
+}
+.go-black {
+  background: radial-gradient(circle at 35% 30%, #555, #111 60%, #000);
+  box-shadow:
+    1px 2px 4px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+}
+.go-white {
+  background: radial-gradient(circle at 35% 30%, #fff, #ddd 60%, #aaa);
+  box-shadow:
+    1px 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+.go-ghost {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #777, #333 60%, #111);
+  opacity: 0.45;
+}
+.just-placed {
+  animation: placeStone 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes placeStone {
+  from {
+    transform: scale(0.3);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
