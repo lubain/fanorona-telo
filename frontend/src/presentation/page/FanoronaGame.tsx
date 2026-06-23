@@ -2,16 +2,45 @@ import isPlacement from "@/applications/utils/isPlacement";
 import { FANORONA_ADJ, O, X } from "@/domain/constants";
 import ResetBtn from "@/presentation/components/ui/ResetBtn";
 import GameStatusBar from "@/presentation/components/GameStatusBar";
+import ThinkingOverlay from "@/presentation/components/ThinkingOverlay";
 import { useFanoronaGame } from "@/applications/hooks/useFanoronaGame";
+import type { Difficulty, GameMode } from "@/domain/types";
 
-export default function FanoronaGame() {
-  const { board, selected, thinking, statusLabel, handleClick, reset } =
-    useFanoronaGame();
+interface Props {
+  mode: GameMode;
+  difficulty: Difficulty;
+  onBack: () => void;
+}
+
+const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  easy: "Facile",
+  medium: "Moyen",
+  hard: "Difficile",
+};
+
+export default function FanoronaGame({ mode, difficulty, onBack }: Props) {
+  const {
+    board,
+    selected,
+    thinking,
+    statusLabel,
+    winner,
+    isDraw,
+    handleClick,
+    reset,
+  } = useFanoronaGame(mode, difficulty);
+
+  const modeLabel =
+    mode === "hvh"
+      ? "Humain vs Humain"
+      : `Humain vs IA — ${DIFFICULTY_LABELS[difficulty]}`;
+
+  const gameOver = winner !== 0 || isDraw;
 
   return (
     <div className="hub-game-wrap">
       <div className="hub-game-header">
-        <button className="hub-back-btn">
+        <button className="hub-back-btn" onClick={onBack}>
           <svg
             width="18"
             height="18"
@@ -22,18 +51,34 @@ export default function FanoronaGame() {
           >
             <path d="M19 12H5M12 5l-7 7 7 7" />
           </svg>
-          Hub
+          Menu
         </button>
-        <h2 className="hub-game-title fanorona-accent">Fanorona Telo</h2>
+        <div className="hub-game-title-wrap">
+          <h2 className="hub-game-title fanorona-accent">Fanorona Telo</h2>
+          <span className="hub-mode-badge">{modeLabel}</span>
+        </div>
         <ResetBtn onClick={reset} />
       </div>
 
-      <GameStatusBar label={statusLabel} />
+      <GameStatusBar
+        label={statusLabel}
+        color={
+          winner === X
+            ? "var(--fan-a)"
+            : winner === O
+              ? "#f472b6"
+              : isDraw
+                ? "var(--muted2)"
+                : undefined
+        }
+      />
 
       <div className="hub-game-surface" style={{ position: "relative" }}>
-        <div className={`fanorona-board${thinking ? " is-thinking" : ""}`}>
+        <div
+          className={`fanorona-board${thinking ? " is-thinking" : ""}${gameOver ? " game-over" : ""}`}
+        >
           <svg className="fanorona-svg" viewBox="0 0 200 200">
-            {/* Grid lines */}
+            {/* Lignes de la grille */}
             <line
               x1="100"
               y1="0"
@@ -102,8 +147,8 @@ export default function FanoronaGame() {
 
           <div className="fanorona-points">
             {board.map((cell, idx) => {
-              const row = Math.floor(idx / 3),
-                col = idx % 3;
+              const row = Math.floor(idx / 3);
+              const col = idx % 3;
               const isSelected = selected === idx;
               const isValidTarget =
                 selected !== null &&
@@ -116,6 +161,8 @@ export default function FanoronaGame() {
                   className={`fanorona-point${isSelected ? " selected" : ""}${isValidTarget ? " valid-target" : ""}`}
                   style={{ top: `${row * 50}%`, left: `${col * 50}%` }}
                   onClick={() => handleClick(idx)}
+                  disabled={gameOver || thinking}
+                  aria-label={`Case ${idx}`}
                 >
                   <div
                     className={`fanorona-piece${cell === X ? " piece-x" : cell === O ? " piece-o" : " piece-empty"}`}
@@ -128,7 +175,8 @@ export default function FanoronaGame() {
             })}
           </div>
         </div>
-        {/* {thinking && <ThinkingOverlay text="L'IA cherche son mouvement…" />} */}
+
+        {thinking && <ThinkingOverlay text="L'IA réfléchit…" />}
       </div>
     </div>
   );
