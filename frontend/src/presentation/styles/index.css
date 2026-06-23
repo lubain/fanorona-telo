@@ -100,6 +100,9 @@ body {
   background: var(--surface2);
 }
 .hub-reset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--muted2);
@@ -114,6 +117,14 @@ body {
 .hub-reset-btn:hover {
   color: var(--text);
   border-color: var(--border2);
+  background: var(--surface2);
+}
+.hub-reset-icon {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+.hub-reset-btn:hover .hub-reset-icon {
+  transform: rotate(-180deg);
 }
 
 .hub-game-title {
@@ -281,73 +292,6 @@ body {
     opacity: 1;
   }
 }
-
-/* Board container */
-.go-board-container {
-  position: relative;
-}
-
-.go-board {
-  position: relative;
-  background: #1c1608;
-  border-radius: 14px;
-  border: 2px solid rgba(180, 150, 80, 0.2);
-  box-shadow:
-    inset 0 0 40px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
-  padding: 0;
-  transition:
-    filter 0.2s,
-    opacity 0.2s;
-  line-height: 0;
-}
-
-/* SVG unique qui contient lignes + pierres */
-.go-svg {
-  display: block;
-  width: min(420px, 92vw);
-  height: min(420px, 92vw);
-  border-radius: 12px;
-}
-
-/* Classes legacy gardées pour compatibilité mais non utilisées par le nouveau rendu */
-.go-grid-svg {
-  display: none;
-}
-.go-intersections {
-  display: none;
-}
-
-/* Stones (gardées au cas où) */
-.go-stone {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: transform 0.1s;
-}
-.go-black {
-  background: radial-gradient(circle at 35% 30%, #555, #111 60%, #000);
-  box-shadow:
-    1px 2px 4px rgba(0, 0, 0, 0.7),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
-}
-.go-white {
-  background: radial-gradient(circle at 35% 30%, #fff, #ddd 60%, #aaa);
-  box-shadow:
-    1px 2px 4px rgba(0, 0, 0, 0.5),
-    inset 0 1px 2px rgba(255, 255, 255, 0.8);
-}
-.go-ghost {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #777, #333 60%, #111);
-  opacity: 0.45;
-}
 .just-placed {
   animation: placeStone 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
@@ -360,4 +304,208 @@ body {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+/* ── SETUP SCREEN ─────────────────────────────────────────── */
+.setup-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.setup-card {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.setup-title {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  text-align: center;
+}
+
+.setup-subtitle {
+  color: var(--muted2);
+  font-size: 0.95rem;
+  text-align: center;
+  margin-top: -0.75rem;
+}
+
+.setup-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.setup-section-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.setup-mode-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  color: var(--text);
+}
+.setup-mode-btn:hover {
+  background: var(--surface2);
+  border-color: var(--border2);
+  transform: translateY(-1px);
+}
+
+.setup-mode-hvh:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.1);
+}
+
+.setup-mode-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.setup-mode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.setup-mode-text strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.setup-mode-text small {
+  font-size: 0.78rem;
+  color: var(--muted2);
+}
+
+.setup-diff-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.setup-diff-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.85rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text);
+  text-align: center;
+}
+.setup-diff-btn:hover {
+  background: var(--surface2);
+  transform: translateY(-1px);
+}
+.setup-diff-btn strong {
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.setup-diff-btn small {
+  font-size: 0.7rem;
+  color: var(--muted2);
+}
+
+.setup-diff-easy:hover {
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.1);
+}
+.setup-diff-medium:hover {
+  border-color: rgba(251, 191, 36, 0.5);
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.1);
+}
+.setup-diff-hard:hover {
+  border-color: rgba(244, 114, 182, 0.5);
+  box-shadow: 0 0 20px rgba(244, 114, 182, 0.1);
+}
+
+.setup-play-again {
+  max-width: 320px;
+  margin-top: 0.5rem;
+}
+.setup-play-again:hover {
+  border-color: rgba(52, 211, 153, 0.5);
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.1);
+}
+
+/* ── GAME HEADER BADGE ────────────────────────────────────── */
+.hub-game-title-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.hub-mode-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+
+/* ── STATUS BAR ───────────────────────────────────────────── */
+.hub-status {
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.65rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.hub-status-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.hub-status-sub {
+  font-size: 0.78rem;
+  color: var(--muted2);
+}
+
+/* ── GAME OVER STATE ──────────────────────────────────────── */
+.game-over {
+  opacity: 0.8;
+}
+
+/* ── THINKING OVERLAY ─────────────────────────────────────── */
+.hub-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  background: rgba(9, 9, 11, 0.4);
+  z-index: 10;
 }
