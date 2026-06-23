@@ -99,6 +99,22 @@ body {
   border-color: var(--border2);
   background: var(--surface2);
 }
+.hub-reset-btn {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.hub-reset-btn:hover {
+  color: var(--text);
+  border-color: var(--border2);
+}
 
 .hub-game-title {
   flex: 1;
