@@ -1,4 +1,4 @@
-# TicTacToe AI Games
+# Fanorona AI Games
 
 #### 1. Backend
 
