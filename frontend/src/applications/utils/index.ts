@@ -1,3 +1,3 @@
 export * from "./checkFanorona";
-export * from "./isPlacement";
 export * from "./fanoronaSuccessors";
+export { default as isPlacement } from "./isPlacement";
