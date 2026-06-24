@@ -3,7 +3,6 @@ import { FANORONA_ADJ, O, X } from "@/domain/constants";
 import ResetBtn from "@/presentation/components/ui/ResetBtn";
 import UndoRedoBtn from "@/presentation/components/ui/UndoRedoBtn";
 import GameStatusBar from "@/presentation/components/GameStatusBar";
-import ThinkingOverlay from "@/presentation/components/ThinkingOverlay";
 import { useFanoronaGame } from "@/applications/hooks/useFanoronaGame";
 import type { Difficulty, GameMode } from "@/domain/types";
 
@@ -21,7 +20,13 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   hard: "Difficile",
 };
 
-export default function FanoronaGame({ mode, difficulty, onBack, difficultyX, difficultyO }: Props) {
+export default function FanoronaGame({
+  mode,
+  difficulty,
+  onBack,
+  difficultyX,
+  difficultyO,
+}: Props) {
   const {
     board,
     selected,
@@ -36,7 +41,7 @@ export default function FanoronaGame({ mode, difficulty, onBack, difficultyX, di
     reset,
     undo,
     redo,
-  } = useFanoronaGame(mode, difficulty, difficultyX, difficultyO)
+  } = useFanoronaGame(mode, difficulty, difficultyX, difficultyO);
 
   const modeLabel =
     mode === "hvh"
@@ -210,7 +215,7 @@ export default function FanoronaGame({ mode, difficulty, onBack, difficultyX, di
           </div>
         </div>
 
-        {thinking && <ThinkingOverlay text="L'IA réfléchit…" />}
+        {/* {thinking && <ThinkingOverlay text="L'IA réfléchit…" />} */}
       </div>
 
       {/* ── Undo / Redo ── */}
