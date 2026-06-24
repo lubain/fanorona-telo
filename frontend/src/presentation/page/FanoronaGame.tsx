@@ -11,6 +11,8 @@ interface Props {
   mode: GameMode;
   difficulty: Difficulty;
   onBack: () => void;
+  difficultyX: Difficulty | undefined;
+  difficultyO: Difficulty | undefined;
 }
 
 const DIFFICULTY_LABELS: Record<Difficulty, string> = {
@@ -19,7 +21,7 @@ const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   hard: "Difficile",
 };
 
-export default function FanoronaGame({ mode, difficulty, onBack }: Props) {
+export default function FanoronaGame({ mode, difficulty, onBack, difficultyX, difficultyO }: Props) {
   const {
     board,
     selected,
@@ -34,7 +36,7 @@ export default function FanoronaGame({ mode, difficulty, onBack }: Props) {
     reset,
     undo,
     redo,
-  } = useFanoronaGame(mode, difficulty);
+  } = useFanoronaGame(mode, difficulty, difficultyX, difficultyO)
 
   const modeLabel =
     mode === "hvh"
