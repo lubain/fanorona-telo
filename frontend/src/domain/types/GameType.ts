@@ -1,1 +1,3 @@
-export type GameType = "tictactoe" | "fanorona" | "puissance4" | "go" | null;
+export type GameMode = "hvh" | "hvia" | null;
+export type Difficulty = "easy" | "medium" | "hard";
+export type Player = 1 | -1;
