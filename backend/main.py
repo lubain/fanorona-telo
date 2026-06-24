@@ -2,16 +2,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from fanoronaTelo import FanoronaTeloNode, has_winner
-from alpha_beta import alpha_beta
+from alpha_beta_advanced import iterative_deepening, TT
+from bitboard import board_to_bits, get_moves_for_player, bits_to_board, has_winner_bits
 from typing import List, Optional
-from pydantic import BaseModel, Field
-import math
+from pydantic import BaseModel
 import random
 
 app = FastAPI(
-    title="Fanorona Telo Games API",
-    description="Moteur IA Alpha-Beta pour Fanorona Telo",
-    version="1.0.0"
+    title="Fanorona Telo — Moteur IA Avancé",
+    description="Alpha-Bêta + Table de transposition + Iterative Deepening + Opening Book + Bitboards",
+    version="2.0.0"
 )
 
 allowed_origins = [
@@ -30,95 +30,121 @@ app.add_middleware(
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  SCHÉMAS COMMUNS
+#  SCHÉMAS
 # ═══════════════════════════════════════════════════════════════════════════
 
 class GameRequest(BaseModel):
     board: List[int]
     turn: int
-    difficulty: Optional[str] = "hard"  # "easy" | "medium" | "hard"
+    difficulty: Optional[str] = "hard"
 
 class GameResponse(BaseModel):
     best_board: List[int]
     next_turn: int
     message: str
+    stats: Optional[dict] = None
 
 class GameStatusResponse(BaseModel):
-    winner: int        # 1, -1, or 0
+    winner: int
     is_draw: bool
     message: str
 
+class TTStatsResponse(BaseModel):
+    size: int
+    hits: int
+    misses: int
+    stores: int
+    hit_rate_pct: float
+
+
 # ═══════════════════════════════════════════════════════════════════════════
-#  UTILITAIRE : vérifier match nul (plus aucun mouvement possible)
+#  UTILITAIRES
 # ═══════════════════════════════════════════════════════════════════════════
 
+DEPTH_BY_DIFFICULTY = {
+    "easy":   1,
+    "medium": 3,
+    "hard":   9,
+}
+
 def is_draw(board: List[int], turn: int) -> bool:
-    """Retourne True si le joueur `turn` n'a aucun coup disponible."""
     if has_winner(board) != 0:
         return False
     node = FanoronaTeloNode(board=board, turn=turn)
     if node.is_placement_phase():
-        return False  # En phase de placement il y a toujours un vide
+        return False
     return len(node.get_successors()) == 0
 
-# ═══════════════════════════════════════════════════════════════════════════
-#  FANORONA TELO : coup IA avec niveau de difficulté
-# ═══════════════════════════════════════════════════════════════════════════
 
-DEPTH_BY_DIFFICULTY = {
-    "easy": 1,
-    "medium": 3,
-    "hard": 9,
-}
+# ═══════════════════════════════════════════════════════════════════════════
+#  ENDPOINT PRINCIPAL — coup IA
+# ═══════════════════════════════════════════════════════════════════════════
 
 @app.post("/fanorona-move", response_model=GameResponse)
 def get_fanorona_move(request: GameRequest):
-    node = FanoronaTeloNode(board=request.board, turn=request.turn)
+    bx, bo = board_to_bits(request.board)
+    winner = has_winner_bits(bx, bo)
+    if winner != 0:
+        raise HTTPException(status_code=400, detail="Partie déjà terminée.")
 
-    if node.is_terminal():
-        raise HTTPException(status_code=400, detail="Partie finie.")
-
-    successors = node.get_successors()
-    if not successors:
-        raise HTTPException(status_code=400, detail="Aucun coup disponible (match nul).")
+    moves = get_moves_for_player(bx, bo, request.turn)
+    if not moves:
+        raise HTTPException(status_code=400, detail="Aucun coup disponible.")
 
     difficulty = (request.difficulty or "hard").lower()
 
+    # ── Facile : coup aléatoire ──────────────────────────────────────────
     if difficulty == "easy":
-        # Facile : coup aléatoire
-        chosen = random.choice(successors)
+        nbx, nbo, _, _ = random.choice(moves)
+        best_board = bits_to_board(nbx, nbo)
         return GameResponse(
-            best_board=chosen.board,
-            next_turn=chosen.turn,
-            message="Coup facile calculé."
+            best_board=best_board,
+            next_turn=-request.turn,
+            message="Coup aléatoire (facile).",
         )
-    elif difficulty == "medium":
-        # Moyen : Alpha-Beta profondeur 3, avec 20% de chance d'un coup aléatoire
+
+    # ── Moyen : ID profondeur 3 + 20% aléatoire ─────────────────────────
+    if difficulty == "medium":
         if random.random() < 0.20:
-            chosen = random.choice(successors)
-        else:
-            depth = DEPTH_BY_DIFFICULTY["medium"]
-            alpha_beta(node, depth=depth, alpha=-math.inf, beta=math.inf, maximizing_player=node.turn)
-            chosen = node.best or random.choice(successors)
-        return GameResponse(
-            best_board=chosen.board,
-            next_turn=chosen.turn,
-            message="Coup moyen calculé."
-        )
+            nbx, nbo, _, _ = random.choice(moves)
+            best_board = bits_to_board(nbx, nbo)
+            return GameResponse(
+                best_board=best_board,
+                next_turn=-request.turn,
+                message="Coup aléatoire (moyen, 20%).",
+            )
+        max_depth = DEPTH_BY_DIFFICULTY["medium"]
     else:
-        # Difficile : Alpha-Beta profondeur 9 (optimal)
-        depth = DEPTH_BY_DIFFICULTY["hard"]
-        alpha_beta(node, depth=depth, alpha=-math.inf, beta=math.inf, maximizing_player=node.turn)
-        best = node.best or random.choice(successors)
-        return GameResponse(
-            best_board=best.board,
-            next_turn=best.turn,
-            message="Meilleur coup calculé avec succès."
-        )
+        max_depth = DEPTH_BY_DIFFICULTY["hard"]
+
+    # ── Difficile / Moyen : Iterative Deepening + TT + Opening Book ─────
+    best_board, next_turn, stats = iterative_deepening(
+        board=request.board,
+        turn=request.turn,
+        max_depth=max_depth,
+        time_limit_ms=4000.0,
+    )
+
+    source = stats.get("source", "")
+    depths = stats.get("depths_completed", [])
+    reached = depths[-1]["depth"] if depths else max_depth
+    total_ms = stats.get("total_ms", 0)
+
+    if source == "opening_book":
+        msg = f"Coup d'ouverture (book) — case {stats.get('sq')}."
+    else:
+        msg = f"Iterative deepening — profondeur {reached} en {total_ms:.1f} ms."
+
+    return GameResponse(
+        best_board=best_board,
+        next_turn=next_turn,
+        message=msg,
+        stats=stats,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  VÉRIFICATION ÉTAT DU JEU (winner + draw)
+#  STATUT DU JEU
 # ═══════════════════════════════════════════════════════════════════════════
 
 @app.post("/fanorona-status", response_model=GameStatusResponse)
@@ -131,3 +157,19 @@ def get_game_status(request: GameRequest):
     if draw:
         return GameStatusResponse(winner=0, is_draw=True, message="Match nul — aucun mouvement possible.")
     return GameStatusResponse(winner=0, is_draw=False, message="Partie en cours.")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  STATS TRANSPOSITION TABLE
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.get("/tt-stats", response_model=TTStatsResponse)
+def get_tt_stats():
+    """Retourne les statistiques de la table de transposition (debug/monitoring)."""
+    return TT.stats()
+
+@app.delete("/tt-clear")
+def clear_tt():
+    """Vide la table de transposition."""
+    TT.clear()
+    return {"message": "Table de transposition vidée."}
