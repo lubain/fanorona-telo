@@ -148,4 +148,95 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
   }, [thinking, mode, board, turn, isDraw, applySnapshot]);
 
   // ─── Clic sur une case ─────────────────────────────────────────────────
-  c
+  const handleClick = useCallback(
+    (idx: number) => {
+      if (winner !== 0 || isDraw || thinking) return;
+      if (mode === "hvia" && turn !== X) return;
+
+      if (placement) {
+        if (board[idx] !== 0) return;
+        const move = validMoves.find((m) => m[idx] === turn);
+        if (move) playHumanMove(move, idx);
+      } else {
+        if (selected === null) {
+          if (board[idx] === turn) setSelected(idx);
+        } else {
+          if (board[idx] === turn) {
+            setSelected(idx);
+            return;
+          }
+          const move = validMoves.find(
+            (m) => m[selected] === 0 && m[idx] === turn,
+          );
+          setSelected(null);
+          if (move) playHumanMove(move, idx);
+        }
+      }
+    },
+    [
+      winner,
+      isDraw,
+      thinking,
+      mode,
+      turn,
+      placement,
+      board,
+      validMoves,
+      selected,
+      playHumanMove,
+    ],
+  );
+
+  // ─── Reset ─────────────────────────────────────────────────────────────
+  const reset = useCallback(() => {
+    past.current = [];
+    future.current = [];
+    setBoard(Array(9).fill(0));
+    setTurn(X);
+    setSelected(null);
+    setIsDraw(false);
+    setLastPlaced(null);
+  }, []);
+
+  // ─── Label statut ──────────────────────────────────────────────────────
+  let statusLabel: string;
+  if (winner !== 0) {
+    const name =
+      mode === "hvh"
+        ? winner === X
+          ? "Joueur 1 (✕)"
+          : "Joueur 2 (◯)"
+        : winner === X
+          ? "Vous (✕)"
+          : "L'IA (◯)";
+    statusLabel = `${name} remporte la partie !`;
+  } else if (isDraw) {
+    statusLabel = "Match nul — aucun mouvement possible.";
+  } else if (thinking) {
+    statusLabel = "L'IA réfléchit…";
+  } else {
+    const phase = placement ? "Placement" : "Déplacement";
+    if (mode === "hvh") {
+      statusLabel = `Tour du Joueur ${turn === X ? "1 (✕)" : "2 (◯)"} — ${phase}`;
+    } else {
+      statusLabel =
+        turn === X ? `Votre tour (✕) — ${phase}` : `L'IA joue (◯) — ${phase}`;
+    }
+  }
+
+  return {
+    board,
+    selected,
+    thinking,
+    statusLabel,
+    winner,
+    isDraw,
+    lastPlaced,
+    canUndo,
+    canRedo,
+    handleClick,
+    reset,
+    undo,
+    redo,
+  };
+};
