@@ -181,4 +181,76 @@ export default function FanoronaGame({ mode, difficulty, onBack }: Props) {
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  styl
+                  style={{ top: `${row * 50}%`, left: `${col * 50}%` }}
+                  onClick={() => handleClick(idx)}
+                  disabled={gameOver || thinking}
+                  aria-label={`Case ${idx}`}
+                >
+                  <div
+                    className={[
+                      "fanorona-piece",
+                      cell === X
+                        ? "piece-x"
+                        : cell === O
+                          ? "piece-o"
+                          : "piece-empty",
+                      isNew && cell !== 0 ? "piece-new" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    {cell === X && <span>✕</span>}
+                    {cell === O && <span>◯</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {thinking && <ThinkingOverlay text="L'IA réfléchit…" />}
+      </div>
+
+      {/* ── Undo / Redo ── */}
+      <UndoRedoBtn
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
+
+      {/* ── Game over CTA ── */}
+      {gameOver && (
+        <div className="game-over-cta">
+          <p className="game-over-label">
+            {winner !== 0
+              ? winner === X
+                ? mode === "hvh"
+                  ? "🏆 Joueur 1 gagne !"
+                  : "🏆 Vous avez gagné !"
+                : mode === "hvh"
+                  ? "🏆 Joueur 2 gagne !"
+                  : "🤖 L'IA gagne !"
+              : "🤝 Match nul !"}
+          </p>
+          <button className="cta-btn" onClick={reset}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            Rejouer
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
