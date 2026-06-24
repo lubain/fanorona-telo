@@ -290,3 +290,66 @@ Le niveau difficile recherche le meilleur coup possible et produit un comporteme
 ### Complexité
 
 L'utilisation de l'élagage Alpha-Beta permet de réduire significativement le nombre de positions explorées par rapport à un Minimax classique. Dans le niveau difficile, l'algorithme explore récursivement les états jusqu'à une profondeur de neuf coups, tout en éliminant les branches non pertinentes grâce aux bornes α (alpha) et β (bêta), ce qui améliore considérablement les performances du moteur de jeu.
+
+
+## Section 6 : Analyses de Performances
+
+### Temps de réponse de l'intelligence artificielle
+
+Des mesures expérimentales ont été réalisées lors de plusieurs parties afin d'évaluer le temps nécessaire à l'intelligence artificielle pour déterminer le meilleur coup.
+
+Les observations montrent que :
+
+* le temps de calcul moyen reste inférieur à **1 milliseconde** ;
+* le temps de réflexion maximal observé est d'environ **0,9 ms** ;
+* l'utilisation de l'algorithme Minimax avec élagage Alpha-Beta permet d'obtenir des temps de réponse très faibles, garantissant une expérience de jeu fluide et sans latence perceptible.
+
+| Niveau de difficulté | Profondeur de recherche | Temps de réponse observé |
+| -------------------- | ----------------------- | ------------------------ |
+| Facile               | 1                       | Instantané               |
+| Moyen                | 3                       | < 0,9 ms                 |
+| Difficile            | 9                       | < 0,9 ms                 |
+
+### Résultats des affrontements IA contre IA
+
+Plusieurs parties ont été observées en mode **IA contre IA** afin d'évaluer l'efficacité des différents niveaux de difficulté.
+
+Les résultats obtenus montrent que :
+
+* l'IA difficile (profondeur 9) domine systématiquement l'IA moyenne (profondeur 3) ;
+* lors des tests effectués, l'IA difficile a remporté toutes les parties contre l'IA moyenne ;
+* l'augmentation de la profondeur de recherche permet à l'IA difficile d'anticiper davantage de coups et d'éviter les situations défavorables.
+
+| Affrontement               | Résultat observé                                            |
+| -------------------------- | ----------------------------------------------------------- |
+| IA Difficile vs IA Moyenne | Victoire de l'IA Difficile dans 100 % des parties observées |
+| IA Moyenne vs IA Facile    | Avantage significatif pour l'IA Moyenne                     |
+| IA Difficile vs IA Facile  | Victoire quasi systématique de l'IA Difficile               |
+
+### Impact des techniques d'optimisation
+
+Le moteur de jeu utilise l'algorithme Minimax optimisé par l'élagage Alpha-Beta.
+
+Cette technique permet :
+
+* d'éliminer les branches de recherche inutiles ;
+* de réduire le nombre d'états explorés ;
+* d'accélérer considérablement la recherche du meilleur coup ;
+* de maintenir un temps de réponse inférieur à la milliseconde même pour une profondeur de recherche élevée.
+
+### Synthèse des performances
+
+| Critère                          | Résultat                        |
+| -------------------------------- | ------------------------------- |
+| Algorithme utilisé               | Minimax avec élagage Alpha-Beta |
+| Profondeur maximale              | 9                               |
+| Temps de réponse maximal observé | ≈ 0,9 ms                        |
+| Fluidité du jeu                  | Très élevée                     |
+| IA difficile contre IA moyenne   | 100 % de victoires observées    |
+| Branches inutiles éliminées      | Oui (Alpha-Beta)                |
+| Table de transposition           | Non                             |
+| Iterative Deepening              | Non                             |
+| Opening Book                     | Non                             |
+| Machine Learning                 | Non                             |
+
+Les expérimentations réalisées montrent que l'algorithme Minimax associé à l'élagage Alpha-Beta permet d'obtenir un moteur de jeu performant, capable de fournir des décisions rapides tout en conservant un niveau stratégique élevé. L'IA difficile se révèle significativement plus efficace que l'IA moyenne, ce qui valide l'intérêt d'une profondeur de recherche plus importante pour le jeu Fanorona Telo.
