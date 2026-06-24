@@ -3,45 +3,98 @@ import isPlacement from "@/applications/utils/isPlacement";
 import { O, X } from "@/domain/constants";
 import type { Difficulty, GameMode, Player } from "@/domain/types";
 import { apiPost } from "@/infrastructure/ApiPost";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
-// ─── Détection de match nul côté client (phase déplacement, aucun coup dispo) ───
+// ─── Snapshot d'état pour undo/redo ───────────────────────────────────────
+interface Snapshot {
+  board: number[];
+  turn: Player;
+  isDraw: boolean;
+}
+
 function clientIsDrawn(board: number[], turn: number): boolean {
-  if (board.filter((c) => c !== 0).length < 6) return false; // phase placement
+  if (board.filter((c) => c !== 0).length < 6) return false;
   return fanoronaSuccessors(board, turn).length === 0;
 }
 
-export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
+function snapshot(board: number[], turn: Player, isDraw: boolean): Snapshot {
+  return { board: [...board], turn, isDraw };
+}
+
+export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty, difficultyX: Difficulty | undefined, difficultyO: Difficulty | undefined) => {
   const [board, setBoard] = useState<number[]>(Array(9).fill(0));
   const [turn, setTurn] = useState<Player>(X);
   const [selected, setSelected] = useState<number | null>(null);
   const [thinking, setThinking] = useState(false);
   const [isDraw, setIsDraw] = useState(false);
+  // lastPlaced: index de la pièce posée/déplacée pour animer
+  const [lastPlaced, setLastPlaced] = useState<number | null>(null);
+
+  // Historiques pour undo/redo
+  const past = useRef<Snapshot[]>([]);
+  const future = useRef<Snapshot[]>([]);
+
+  const canUndo = past.current.length > 0 && !thinking;
+  const canRedo = future.current.length > 0 && !thinking;
 
   const winner = checkFanorona(board);
   const placement = isPlacement(board);
   const validMoves = fanoronaSuccessors(board, turn);
 
-  // Appel IA
+  // ─── useEffect pour les parties ia vs ia ────────────────────────────────
+  useEffect(() => {
+    if (mode !== "iavia") return
+    if (winner !== 0 || isDraw || thinking) return
+
+    const pause = setTimeout(() => {
+      const level = turn === 1 ? difficultyX : difficultyO
+      askAI(board, turn, level)
+    }, 800)
+
+    return () => clearTimeout(pause)
+  }, [mode, turn, winner, isDraw, thinking])
+
+  // ─── Appliquer un snapshot ──────────────────────────────────────────────
+  const applySnapshot = useCallback(
+    (s: Snapshot, placed: number | null = null) => {
+      setBoard(s.board);
+      setTurn(s.turn);
+      setIsDraw(s.isDraw);
+      setSelected(null);
+      setLastPlaced(placed);
+    },
+    [],
+  );
+
+  // ─── Appel IA ──────────────────────────────────────────────────────────
   const askAI = useCallback(
-    async (nb: number[], aiTurn: Player) => {
+    async (nb: number[], aiTurn: Player, level?: Difficulty) => {
       setThinking(true);
       try {
+        const iaLevel = mode === "iavia" ? level : difficulty
         const d = await apiPost("/fanorona-move", {
           board: nb,
           turn: aiTurn,
-          difficulty,
+          difficulty: iaLevel,
         });
         const aiBoard: number[] = d.best_board;
         const aiNext: Player = d.next_turn;
+
+        // Trouver quelle case a changé pour l'animer
+        const changedIdx = aiBoard.findIndex((v, i) => v !== nb[i] && v !== 0);
+
+        // Push snapshot avant le coup IA dans past
+        past.current.push(snapshot(nb, aiTurn, false));
+        future.current = [];
+
         setBoard(aiBoard);
         setTurn(aiNext);
-        // Vérifier draw après coup IA
+        setLastPlaced(changedIdx >= 0 ? changedIdx : null);
         if (checkFanorona(aiBoard) === 0 && clientIsDrawn(aiBoard, aiNext)) {
           setIsDraw(true);
         }
       } catch {
-        // En cas d'échec réseau, on laisse l'état tel quel
+        // réseau indisponible — on ne bloque pas
       } finally {
         setThinking(false);
       }
@@ -49,44 +102,76 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
     [difficulty],
   );
 
-  // Jouer un coup humain et enchaîner l'IA si besoin
+  // ─── Jouer un coup humain ───────────────────────────────────────────────
   const playHumanMove = useCallback(
-    async (nb: number[]) => {
+    async (nb: number[], placedIdx: number) => {
       const next: Player = turn === X ? O : X;
+
+      // Sauvegarder l'état courant dans past
+      past.current.push(snapshot(board, turn, isDraw));
+      future.current = [];
+
       setBoard(nb);
       setTurn(next);
       setSelected(null);
+      setLastPlaced(placedIdx);
 
       const w = checkFanorona(nb);
-      if (w !== 0) return; // victoire immédiate
+      if (w !== 0) return;
 
-      // Vérifier draw après coup humain
       if (clientIsDrawn(nb, next)) {
         setIsDraw(true);
         return;
       }
 
-      // Mode HvIA : l'IA joue si c'est son tour (O = -1)
       if (mode === "hvia" && next === O) {
         await askAI(nb, next);
       }
     },
-    [turn, mode, askAI],
+    [turn, board, isDraw, mode, askAI],
   );
 
+  // ─── Undo ───────────────────────────────────────────────────────────────
+  const undo = useCallback(() => {
+    if (past.current.length === 0 || thinking) return;
+
+    // En mode HvIA, on remonte 2 coups (coup IA + coup humain)
+    // sauf si on est en tout début de partie (un seul état dispo)
+    const stepsBack = mode === "hvia" && past.current.length >= 2 ? 2 : 1;
+
+    for (let i = 0; i < stepsBack; i++) {
+      const prev = past.current.pop();
+      if (!prev) break;
+      future.current.push(snapshot(board, turn, isDraw));
+      applySnapshot(prev);
+    }
+  }, [thinking, mode, board, turn, isDraw, applySnapshot]);
+
+  // ─── Redo ───────────────────────────────────────────────────────────────
+  const redo = useCallback(() => {
+    if (future.current.length === 0 || thinking) return;
+
+    const stepsForward = mode === "hvia" && future.current.length >= 2 ? 2 : 1;
+
+    for (let i = 0; i < stepsForward; i++) {
+      const next = future.current.pop();
+      if (!next) break;
+      past.current.push(snapshot(board, turn, isDraw));
+      applySnapshot(next);
+    }
+  }, [thinking, mode, board, turn, isDraw, applySnapshot]);
+
+  // ─── Clic sur une case ─────────────────────────────────────────────────
   const handleClick = useCallback(
     (idx: number) => {
-      // Blocages globaux
       if (winner !== 0 || isDraw || thinking) return;
-
-      // En mode HvH, les deux joueurs jouent
-      // En mode HvIA, seul X (humain) clique
       if (mode === "hvia" && turn !== X) return;
+      if (mode === "iavia") return
 
       if (placement) {
         if (board[idx] !== 0) return;
         const move = validMoves.find((m) => m[idx] === turn);
-        if (move) playHumanMove(move);
+        if (move) playHumanMove(move, idx);
       } else {
         if (selected === null) {
           if (board[idx] === turn) setSelected(idx);
@@ -99,7 +184,7 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
             (m) => m[selected] === 0 && m[idx] === turn,
           );
           setSelected(null);
-          if (move) playHumanMove(move);
+          if (move) playHumanMove(move, idx);
         }
       }
     },
@@ -117,14 +202,18 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
     ],
   );
 
+  // ─── Reset ─────────────────────────────────────────────────────────────
   const reset = useCallback(() => {
+    past.current = [];
+    future.current = [];
     setBoard(Array(9).fill(0));
     setTurn(X);
     setSelected(null);
     setIsDraw(false);
+    setLastPlaced(null);
   }, []);
 
-  // ─── Label de statut ───────────────────────────────────────────────────
+  // ─── Label statut ──────────────────────────────────────────────────────
   let statusLabel: string;
   if (winner !== 0) {
     const name =
@@ -157,7 +246,12 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
     statusLabel,
     winner,
     isDraw,
+    lastPlaced,
+    canUndo,
+    canRedo,
     handleClick,
     reset,
+    undo,
+    redo,
   };
 };
