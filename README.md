@@ -139,5 +139,154 @@ Backend (FastAPI)
 
 ### Version hébergée
 
-* Application web : `https://<frontend-url>`
-* API Backend : `https://<backend-url>`
+* Application web : `https://fanorona-telo-neon.vercel.app/`
+* API Backend : `https://fanorona-telo.fastapicloud.dev/`
+
+
+## Section 5 : Modélisation et Algorithmes de l'IA du Jeu
+
+### Représentation de l'état du plateau
+
+Le plateau de Fanorona Telo est représenté par une structure de données de type **liste de neuf entiers** :
+
+```python
+board = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+```
+
+Chaque case du plateau correspond à une intersection du plateau 3 × 3 :
+
+* `1` : pion du joueur X ;
+* `-1` : pion du joueur O ;
+* `0` : intersection libre.
+
+Les lignes gagnantes (horizontales, verticales et diagonales) sont stockées dans une constante `LINES`, qui permet de détecter efficacement les alignements :
+
+```python
+LINES = [
+    (0,1,2), (3,4,5), (6,7,8),
+    (0,3,6), (1,4,7), (2,5,8),
+    (0,4,8), (2,4,6)
+]
+```
+
+Les déplacements possibles entre intersections sont modélisés à l'aide d'une liste d'adjacence `ADJACENCES`, permettant de générer uniquement les mouvements autorisés pendant la phase de déplacement.
+
+### Modélisation des états du jeu
+
+Chaque état du jeu est représenté par la classe `FanoronaTeloNode`, qui contient :
+
+* la configuration actuelle du plateau ;
+* le joueur dont c'est le tour ;
+* les méthodes de génération des coups possibles ;
+* la détection des états terminaux ;
+* la fonction d'évaluation heuristique.
+
+La méthode `get_successors()` permet de générer tous les états fils accessibles depuis l'état courant :
+
+* pendant la phase de placement, un pion est placé sur chaque case libre ;
+* pendant la phase de déplacement, un pion peut être déplacé vers une intersection adjacente libre.
+
+Cette représentation forme implicitement un arbre de recherche utilisé par l'intelligence artificielle.
+
+### Algorithme Minimax avec élagage Alpha-Beta
+
+L'intelligence artificielle est basée sur l'algorithme **Minimax avec élagage Alpha-Beta**.
+
+Le principe consiste à :
+
+1. Générer tous les coups possibles.
+2. Simuler récursivement les réponses de l'adversaire.
+3. Évaluer les positions obtenues.
+4. Choisir le coup maximisant les chances de victoire.
+
+L'élagage Alpha-Beta permet d'éliminer certaines branches de l'arbre lorsqu'il est déjà établi qu'elles ne peuvent pas améliorer la solution courante. Cette optimisation réduit considérablement le nombre d'états explorés et améliore le temps de calcul.
+
+La meilleure position trouvée est mémorisée dans l'attribut :
+
+```python
+node.best
+```
+
+afin de récupérer directement le coup optimal.
+
+### Fonction d'évaluation heuristique
+
+Lorsque la profondeur maximale est atteinte ou qu'une position terminale est rencontrée, la fonction `evaluate()` attribue un score à la position.
+
+#### Victoire ou défaite
+
+Une victoire du joueur étudié reçoit une valeur élevée :
+
+```python
+100
+```
+
+tandis qu'une défaite reçoit :
+
+```python
+-100
+```
+
+#### Contrôle du centre
+
+La case centrale (indice 4) étant stratégiquement importante, un bonus est attribué :
+
+```python
++10
+```
+
+si elle est occupée par le joueur, et :
+
+```python
+-10
+```
+
+si elle est contrôlée par l'adversaire.
+
+#### Détection des menaces
+
+Une ligne contenant :
+
+* deux pions du joueur ;
+* une case vide ;
+
+reçoit un bonus :
+
+```python
++20
+```
+
+car elle représente une opportunité de victoire.
+
+À l'inverse, une ligne contenant deux pions adverses et une case libre reçoit une pénalité :
+
+```python
+-50
+```
+
+afin d'encourager l'IA à bloquer les menaces de l'adversaire.
+
+### Niveaux de difficulté
+
+Trois niveaux de difficulté sont proposés :
+
+| Niveau    | Méthode utilisée                                      |
+| --------- | ----------------------------------------------------- |
+| Facile    | Coup aléatoire                                        |
+| Moyen     | Alpha-Beta profondeur 3 avec 20 % de coups aléatoires |
+| Difficile | Alpha-Beta profondeur 9                               |
+
+Le niveau difficile recherche le meilleur coup possible et produit un comportement proche du jeu optimal.
+
+### Techniques avancées utilisées
+
+| Technique                                           | Utilisée |
+| --------------------------------------------------- | -------- |
+| Minimax                                             | ✅        |
+| Élagage Alpha-Beta                                  | ✅        |
+| Fonction heuristique                                | ✅        |
+| Profondeur variable selon le niveau                 | ✅        |
+
+### Complexité
+
+L'utilisation de l'élagage Alpha-Beta permet de réduire significativement le nombre de positions explorées par rapport à un Minimax classique. Dans le niveau difficile, l'algorithme explore récursivement les états jusqu'à une profondeur de neuf coups, tout en éliminant les branches non pertinentes grâce aux bornes α (alpha) et β (bêta), ce qui améliore considérablement les performances du moteur de jeu.
