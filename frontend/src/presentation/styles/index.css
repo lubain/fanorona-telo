@@ -657,13 +657,112 @@ body {
   transform: translateY(0);
 }
 
-/* ── Variante HvH du bouton de mode (highlight spécifique) ── */
+/* ── Variantes des boutons de mode ── */
 .setup-mode-hvh {
   border-color: var(--border2);
 }
 .setup-mode-hvh:hover {
   border-color: rgba(99, 102, 241, 0.55);
   box-shadow: 0 0 28px rgba(99, 102, 241, 0.12);
+}
+
+.setup-mode-iavia {
+  border-color: var(--border2);
+}
+.setup-mode-iavia:hover {
+  border-color: rgba(52, 211, 153, 0.55);
+  box-shadow: 0 0 28px rgba(52, 211, 153, 0.12);
+}
+
+/* ── Config IA vs IA ── */
+.setup-iavia-config {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  animation: fadeUp 0.25s var(--ease-out) both;
+}
+
+.setup-iavia-player {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.setup-iavia-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.setup-iavia-diffs {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.setup-iavia-diff-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--muted2);
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+.setup-iavia-diff-btn:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
+}
+.setup-iavia-diff-btn.active {
+  background: rgba(52, 211, 153, 0.1);
+  border-color: var(--fan-a);
+  color: var(--fan-a);
+}
+.setup-iavia-diff-btn.active:has(~ .active) {
+  border-color: var(--fan-pink);
+  color: var(--fan-pink);
+  background: rgba(244, 114, 182, 0.1);
+}
+
+.setup-iavia-start {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--fan-a);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+  margin-top: 0.25rem;
+}
+.setup-iavia-start:hover {
+  background: var(--fan-b);
+  transform: translateY(-1px);
+}
+.setup-iavia-start:active {
+  transform: translateY(0);
 }
 
 /* ── Difficulty labels dans setup-diff-btn ── */

@@ -3,7 +3,7 @@ import isPlacement from "@/applications/utils/isPlacement";
 import { O, X } from "@/domain/constants";
 import type { Difficulty, GameMode, Player } from "@/domain/types";
 import { apiPost } from "@/infrastructure/ApiPost";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 // ─── Snapshot d'état pour undo/redo ───────────────────────────────────────
 interface Snapshot {
@@ -21,7 +21,7 @@ function snapshot(board: number[], turn: Player, isDraw: boolean): Snapshot {
   return { board: [...board], turn, isDraw };
 }
 
-export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
+export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty, difficultyX: Difficulty | undefined, difficultyO: Difficulty | undefined) => {
   const [board, setBoard] = useState<number[]>(Array(9).fill(0));
   const [turn, setTurn] = useState<Player>(X);
   const [selected, setSelected] = useState<number | null>(null);
@@ -41,6 +41,19 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
   const placement = isPlacement(board);
   const validMoves = fanoronaSuccessors(board, turn);
 
+  // ─── useEffect pour les parties ia vs ia ────────────────────────────────
+  useEffect(() => {
+    if (mode !== "iavia") return
+    if (winner !== 0 || isDraw || thinking) return
+
+    const pause = setTimeout(() => {
+      const level = turn === 1 ? difficultyX : difficultyO
+      askAI(board, turn, level)
+    }, 800)
+
+    return () => clearTimeout(pause)
+  }, [mode, turn, winner, isDraw, thinking])
+
   // ─── Appliquer un snapshot ──────────────────────────────────────────────
   const applySnapshot = useCallback(
     (s: Snapshot, placed: number | null = null) => {
@@ -55,13 +68,14 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
 
   // ─── Appel IA ──────────────────────────────────────────────────────────
   const askAI = useCallback(
-    async (nb: number[], aiTurn: Player) => {
+    async (nb: number[], aiTurn: Player, level?: Difficulty) => {
       setThinking(true);
       try {
+        const iaLevel = mode === "iavia" ? level : difficulty
         const d = await apiPost("/fanorona-move", {
           board: nb,
           turn: aiTurn,
-          difficulty,
+          difficulty: iaLevel,
         });
         const aiBoard: number[] = d.best_board;
         const aiNext: Player = d.next_turn;
@@ -152,6 +166,7 @@ export const useFanoronaGame = (mode: GameMode, difficulty: Difficulty) => {
     (idx: number) => {
       if (winner !== 0 || isDraw || thinking) return;
       if (mode === "hvia" && turn !== X) return;
+      if (mode === "iavia") return
 
       if (placement) {
         if (board[idx] !== 0) return;

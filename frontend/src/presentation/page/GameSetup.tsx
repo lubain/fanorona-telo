@@ -1,7 +1,8 @@
 import type { Difficulty, GameMode } from "@/domain/types";
+import { useState } from "react";
 
 interface Props {
-  onStart: (mode: GameMode, difficulty: Difficulty) => void;
+  onStart: (mode: GameMode, difficulty: Difficulty, difficultyX?: Difficulty | undefined, difficultyO?: Difficulty | undefined) => void;
 }
 
 const DIFFICULTIES: {
@@ -11,30 +12,34 @@ const DIFFICULTIES: {
   icon: string;
   color: string;
 }[] = [
-  {
-    value: "easy",
-    label: "Facile",
-    desc: "L'IA joue au hasard",
-    icon: "🌱",
-    color: "easy",
-  },
-  {
-    value: "medium",
-    label: "Moyen",
-    desc: "Quelques erreurs",
-    icon: "⚡",
-    color: "medium",
-  },
-  {
-    value: "hard",
-    label: "Difficile",
-    desc: "Jeu optimal",
-    icon: "💀",
-    color: "hard",
-  },
-];
+    {
+      value: "easy",
+      label: "Facile",
+      desc: "L'IA joue au hasard",
+      icon: "🌱",
+      color: "easy",
+    },
+    {
+      value: "medium",
+      label: "Moyen",
+      desc: "Quelques erreurs",
+      icon: "⚡",
+      color: "medium",
+    },
+    {
+      value: "hard",
+      label: "Difficile",
+      desc: "Jeu optimal",
+      icon: "💀",
+      color: "hard",
+    },
+  ];
 
 export default function GameSetup({ onStart }: Props) {
+  const [iaviaX, setIaviaX] = useState<Difficulty>("medium")
+  const [iaviaO, setIaviaO] = useState<Difficulty>("medium")
+  const [showConfig, setShowConfig] = useState(false)
+
   return (
     <div className="setup-wrap">
       <div className="setup-card">
@@ -168,6 +173,64 @@ export default function GameSetup({ onStart }: Props) {
             </button>
           ))}
         </div>
+        <div className="setup-section">
+          <button
+            className="setup-mode-btn setup-mode-iavia"
+            onClick={() => setShowConfig(true)}
+          >
+            <span className="setup-mode-icon">🤖</span>
+            <span className="setup-mode-text">
+              <strong>IA vs IA</strong>
+              <small>Les deux IA s'affrontent</small>
+            </span>
+          </button>
+
+          {showConfig && (
+            <div className="setup-iavia-config">
+              <div className="setup-iavia-player">
+                <span className="setup-iavia-label" style={{ color: "var(--fan-a)" }}>
+                  IA X (Vert)
+                </span>
+                <div className="setup-iavia-diffs">
+                  {DIFFICULTIES.map(d => (
+                    <button
+                      key={d.value}
+                      className={`setup-iavia-diff-btn ${iaviaX === d.value ? "active" : ""}`}
+                      onClick={() => setIaviaX(d.value)}
+                    >
+                      {d.icon} {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="setup-iavia-player">
+                <span className="setup-iavia-label" style={{ color: "var(--fan-pink)" }}>
+                  IA O (Rose)
+                </span>
+                <div className="setup-iavia-diffs">
+                  {DIFFICULTIES.map(d => (
+                    <button
+                      key={d.value}
+                      className={`setup-iavia-diff-btn ${iaviaO === d.value ? "active" : ""}`}
+                      onClick={() => setIaviaO(d.value)}
+                    >
+                      {d.icon} {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                className="setup-iavia-start"
+                onClick={() => onStart("iavia", "medium", iaviaX, iaviaO)}
+              >
+                Lancer la partie
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
